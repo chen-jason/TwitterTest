@@ -6,43 +6,52 @@
 <script type="text/javascript" src="http://www.google.com/jsapi"></script>
 <script src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-<h3>Simple Twitter Analyzer</h3>
-
-<h3> Log out of Twitter <a href="/logout/">here</a>.</h3>
-
-<h4>Embedded tweets (latest 10)</h4>
-{% for disp in embed %}
-    {{ disp.html }}
-{% endfor %}
-
-<h4>Remaining tweets in text</h4>
-{% for status in tweets[10:] %}
-    <p><b><i>{{ status|e }}</i></b></p>
-{% endfor %}
-
-<div id="wcdiv"></div>
-
 <script type="text/javascript">
-    var test = new Array();
+    // Acquires the list of strings from jinja2
+    var temp = new Array();
     {% for tweet in tweets %}
-        test.push("{{ tweet|e }}");
+        temp.push("{{ tweet|e }}");
     {% endfor %}
 
+    // Google Visualization API call
     google.load("visualization", "1");
     google.setOnLoadCallback(draw);
 
     function draw() {
+        // Creates visualization data table to population each string in a row
         var data = new google.visualization.DataTable();
         data.addColumn('string', 'Text1');
-        data.addRows(test.length);
+        data.addRows(temp.length);
 
-        for (var i = 0; i < test.length; i++) {
-            data.setCell(i, 0, test[i]);
+        for (var i = 0; i < temp.length; i++) {
+            data.setCell(i, 0, temp[i]);
         };
         var outputDiv = document.getElementById('wcdiv');
         var wc = new WordCloud(outputDiv);
         wc.draw(data, null);
     }
 </script>
+
+<h3>Simple Twitter Analyzer</h3>
+
+<h3> Log out of Twitter <a href="/logout/">here</a>.</h3>
+
+<div>
+    <h4>Embedded tweets (latest 10)</h4>
+    <div style="float:left; width:40%">
+        {% for disp in embed %}
+            {{ disp.html }}
+        {% endfor %}
+    </div>
+
+    <div id="wcdiv" style="float:right; width:60%"></div>
+</div>
+
+<div style="float:left">
+    <h4>Remaining tweets in text</h4>
+    {% for status in tweets[10:] %}
+        <p><b><i>{{ status|e }}</i></b></p>
+    {% endfor %}
+</div>
 
 {% endblock content %}
