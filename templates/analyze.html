@@ -1,6 +1,46 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h1>{{ api.me().name }}</h1>
+<link rel="stylesheet" type="text/css" href="http://visapi-gadgets.googlecode.com/svn/trunk/wordcloud/wc.css"/>
+<script type="text/javascript" src="http://visapi-gadgets.googlecode.com/svn/trunk/wordcloud/wc.js"></script>
+<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+<script src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+<h3>Simple Twitter Analyzer</h3>
+
+<h4>Embedded tweets (latest 10)</h4>
+{% for disp in embed %}
+    {{ disp.html }}
+{% endfor %}
+
+<h4>Remaining tweets in text</h4>
+{% for status in tweets[10:] %}
+    <p><b><i>{{ status|e }}</i></b></p>
+{% endfor %}
+
+<div id="wcdiv"></div>
+
+<script type="text/javascript">
+    var test = new Array();
+    {% for tweet in tweets %}
+        test.push("{{ tweet|e }}");
+    {% endfor %}
+
+    google.load("visualization", "1");
+    google.setOnLoadCallback(draw);
+
+    function draw() {
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Text1');
+        data.addRows(test.length);
+
+        for (var i = 0; i < test.length; i++) {
+            data.setCell(i, 0, test[i]);
+        };
+        var outputDiv = document.getElementById('wcdiv');
+        var wc = new WordCloud(outputDiv);
+        wc.draw(data, null);
+    }
+</script>
 
 {% endblock content %}

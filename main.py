@@ -19,6 +19,7 @@ import jinja2
 import tweepy
 import os
 import re
+import json
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_environment = \
@@ -95,7 +96,31 @@ class TwitterAnalyze(BaseHandler):
 
     def get(self):
         api = auth_dict['api']
-        self.render_template('analyze.html', {'api': api})
+
+        timeline = api.home_timeline(count=100)
+        word_list = []
+        embed = []
+        text = ''
+
+        for tweets in timeline:
+            if hasattr(tweets, 'retweeted_status') and tweets.retweeted_status:
+                text = tweets.retweeted_status.text
+            else:
+                text = tweets.text
+            result = re.sub(r'(&amp;|&nbsp;|&quot;|&euro;|&lt;|&gt;)', '', text)
+            result = re.sub(r'(https?)\:\/\/[A-z\-\.]+\.[A-z]{2,3}\/[A-z0-9]{2,}', '', result)
+            result = re.sub(r'[^\w]', ' ', result)
+
+            words = result.split()
+            final_word = ''
+            for word in words:
+                if len(word) >= 3:
+                    final_word = final_word + ' ' + word
+            word_list.append(final_word)
+
+        for tweets in timeline[0:10]:
+            embed.append(api.get_oembed(id=tweets.id, maxwidth=500, omit_script=True))
+        self.render_template('analyze.html', {'embed': embed, 'tweets': word_list})
 
 app = webapp2.WSGIApplication([
     ('/', MainPage),
