@@ -69,14 +69,24 @@ class LoginPage(BaseHandler):
 
         return self.redirect(redirect_url)
 
+class LogoutPage(BaseHandler):
+
+    def get(self):
+        if 'api' in auth_dict:
+            auth_dict.clear()
+        return self.redirect('/')
+
 class Verify(BaseHandler):
 
     def get(self):
         verifier= self.request.get('oauth_verifier')
 
         auth = tweepy.OAuthHandler(CONSUMER_TOKEN, CONSUMER_SECRET)
-        token = session['request_token']
-        del session['request_token']
+        if not 'request_token' in session:
+            return self.redirect('/')
+        else:
+            token = session['request_token']
+            del session['request_token']
 
         auth.set_request_token(token[0], token[1])
 
@@ -87,15 +97,21 @@ class Verify(BaseHandler):
 
         api = tweepy.API(auth)
 
-        auth_dict['api']=api
-        auth_dict['access_token_key']=auth.access_token.key
-        auth_dict['access_token_secret']=auth.access_token.secret
-        return self.redirect('/analyze/')
+        if auth.access_token is None:
+            return self.redirect('/')
+        else:
+            auth_dict['api']=api
+            auth_dict['access_token_key']=auth.access_token.key
+            auth_dict['access_token_secret']=auth.access_token.secret
+            return self.redirect('/analyze/')
 
 class TwitterAnalyze(BaseHandler):
 
     def get(self):
-        api = auth_dict['api']
+        if not 'api' in auth_dict:
+            return self.redirect('/')
+        else:
+            api = auth_dict['api']
 
         timeline = api.home_timeline(count=100)
         word_list = []
@@ -125,6 +141,7 @@ class TwitterAnalyze(BaseHandler):
 app = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/login/', LoginPage),
+    ('/logout/', LogoutPage),
     ('/verify/', Verify),
     ('/analyze/', TwitterAnalyze)
 ], debug=True)
